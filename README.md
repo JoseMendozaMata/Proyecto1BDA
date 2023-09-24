@@ -5,7 +5,7 @@ Requerimientos:
 - Node.js
 - npm
 
-#Puesta en marcha:
+# Puesta en marcha:
 
 En el archivo package.json se encuentran las dependencias del proyecto, por lo que deben colocarse en el root del proyecto en una terminal, luego ejecutar:
 
