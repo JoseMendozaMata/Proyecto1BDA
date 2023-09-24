@@ -1,0 +1,17 @@
+{
+  "name": "ProyectoBDA",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+
+  "dependencies": {
+    "body-parser": "*",
+    "ejs": "3.1.9",
+    "express": "*",
+    "morgan": "*",
+    "neo4j-driver": "^5.12.0",
+    "nodemon": "^3.0.1",
+    "dotenv": "*"
+    
+  }
+}
