@@ -25,7 +25,9 @@ const PASSWORD = process.env.PASSWORD;
 
 //Crear driver
 
-var driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD));
+var driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD), {
+    disableLosslessIntegers: true,
+});
 var session = driver.session();
 
 //Middleware para usar el body del json para peticiones
@@ -45,6 +47,81 @@ app.get("/", function (req, res) {
 });
 
 // ----------- Investigadores ------------
+
+//Obtener todos los investigadores
+app.get("/investigadores", (req, res) => {
+    const query = `MATCH (investigador:Investigador)
+    RETURN investigador`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar las publicaciones
+            linv = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener investigador de query
+                inv = result.records[i].get("investigador").properties;
+
+                linv.push(inv);
+            }
+
+            res.status(200).send({
+                success: true,
+                investigadores: linv,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
+
+/*se seleccionara el nombre
+completo del investigador(a) y se mostrar en pantalla sus datos
+basicos, asi como toda la informacion de las investigaciones en las
+cuales participa
+*/
+
+app.get("/publicaciones_investigador", (req, res) => {
+    const query = `MATCH (investigador:Investigador {id: ${req.body.id}})
+    OPTIONAL MATCH (investigador)-[:TRABAJA_EN]->(proyecto:Proyecto)
+    OPTIONAL MATCH (proyecto)<-[:RELACIONADO_CON]-(publicacion:Publicacion)
+    RETURN publicacion, investigador`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar las publicaciones
+            lpub = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener investigador de query
+                inv = result.records[0].get("investigador").properties;
+                //Obtener publicacion de query
+                pub = result.records[i].get("publicacion");
+                lpub.push(pub.properties);
+            }
+
+            res.status(200).send({
+                success: true,
+                investigador: inv,
+                publicaciones: lpub,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
 
 app.post("/investigador", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
