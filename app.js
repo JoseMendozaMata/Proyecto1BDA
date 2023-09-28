@@ -81,7 +81,7 @@ app.get("/investigadores", (req, res) => {
         });
 });
 
-/*se seleccionara el nombre
+/*Se seleccionara el nombre
 completo del investigador(a) y se mostrar en pantalla sus datos
 basicos, asi como toda la informacion de las investigaciones en las
 cuales participa
@@ -182,6 +182,39 @@ app.put("/investigador", (req, res) => {
 
 // ----------- Proyectos ------------
 
+//Obtener todos los proyectos de la BD
+app.get("/proyectos", (req, res) => {
+    const query = `MATCH (p:Proyecto)
+    RETURN p`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar los proyectos
+            lproy = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener proyectos de query
+                proy = result.records[i].get("p").properties;
+
+                lproy.push(proy);
+            }
+
+            res.status(200).send({
+                success: true,
+                proyectos: lproy,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
+
 app.post("/proyecto", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
     const query = `CREATE (p: Proyecto {
@@ -239,6 +272,183 @@ app.put("/proyecto", (req, res) => {
 });
 
 // ----------- Publicaciones ------------
+
+//Obtener todas las publicaciones de la BD
+app.get("/publicaciones", (req, res) => {
+    const query = `MATCH (p:Publicacion)
+    RETURN p`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar los proyectos
+            lpub = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener proyectos de query
+                pub = result.records[i].get("p").properties;
+
+                lpub.push(pub);
+            }
+
+            res.status(200).send({
+                success: true,
+                publicaciones: lpub,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
+
+//Obtener top 5 areas de conocimiento que cuenten con mayor cantidad de publicaciones
+app.get("/top_5_area_conocimiento", (req, res) => {
+    const query = `MATCH (p:Proyecto)
+    WHERE p.area_conocimiento IS NOT NULL
+    WITH p.area_conocimiento AS AreaConocimiento, count(p.area_conocimiento) AS count
+    ORDER BY count DESC
+    LIMIT 5
+    RETURN AreaConocimiento, count`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar los proyectos
+            lareas = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener area_conocimiento de query
+                a = result.records[i].get("AreaConocimiento");
+                //Obtener cantidad de ocurrencias de query
+                c = result.records[i].get("count");
+
+                //Crear objeto con area_conocimiento y cantidad
+                const obj = {
+                    area_conocimiento: a,
+                    cantidad: c,
+                };
+
+                lareas.push(obj);
+            }
+
+            res.status(200).send({
+                success: true,
+                publicaciones: lareas,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
+
+//Obtener top 5 instituciones que cuenten con mayor cantidad de publicaciones
+app.get("/top_5_instituciones", (req, res) => {
+    const query = `MATCH (i:Investigador)-[TRABAJA_EN]->(p:Proyecto)
+    WITH i, p
+    MATCH (pb:Publicacion)-[RELACIONADO_CON]->(p:Proyecto)
+        WHERE i.institucion IS NOT NULL
+        WITH i.institucion AS Institucion, count(p) AS count
+        ORDER BY count DESC
+        LIMIT 5
+        RETURN Institucion, count`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar los proyectos
+            linst = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener area_conocimiento de query
+                inst = result.records[i].get("Institucion");
+                //Obtener cantidad de ocurrencias de query
+                count = result.records[i].get("count");
+
+                console.log(i);
+
+                //Crear objeto con area_conocimiento y cantidad
+                const obj = {
+                    institucion: inst,
+                    cantidad: count,
+                };
+
+                linst.push(obj);
+            }
+
+            res.status(200).send({
+                success: true,
+                publicaciones: linst,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
+
+//Top 5 investigadores que participan en más investigaciones
+app.get("/top_5_investigadores", (req, res) => {
+    const query = `MATCH (i:Investigador)-[TRABAJA_EN]->(p:Proyecto)
+    WITH i, p
+    MATCH (pb:Publicacion)-[RELACIONADO_CON]->(p:Proyecto)
+        WHERE pb.idPub IS NOT NULL
+        WITH i AS Investigador, count(p) AS count
+        ORDER BY count DESC
+        LIMIT 5
+        RETURN Investigador, count`;
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar los proyectos
+            linst = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener area_conocimiento de query
+                inv = result.records[i].get("Investigador");
+                //Obtener cantidad de ocurrencias de query
+                count = result.records[i].get("count");
+
+                console.log(i);
+
+                //Crear objeto con el nombre completo, la institución donde labora y la cantidad de proyectos de investigación
+                const obj = {
+                    investigador: inv.properties["nombre_completo"],
+                    institucion: inv.properties["institucion"],
+                    cantidad: count,
+                };
+
+                linst.push(obj);
+            }
+
+            res.status(200).send({
+                success: true,
+                investigadores: linst,
+            });
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        });
+});
 
 app.post("/publicacion", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
