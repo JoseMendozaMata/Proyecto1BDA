@@ -3,7 +3,11 @@ var path = require("path");
 var logger = require("morgan");
 var bodyParser = require("body-parser");
 var neo4j = require("neo4j-driver");
+const fileUpload = require('express-fileupload');
+const csv = require('csv-parser');
 var app = express();
+const fs = require('fs');
+
 
 //Para usar el .env config file, para estar seguros que credenciales y base de datos sean correctos
 require("dotenv").config();
@@ -33,6 +37,8 @@ var session = driver.session();
 //Middleware para usar el body del json para peticiones
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use(fileUpload());
 
 //Contadores como id's
 
@@ -350,6 +356,75 @@ app.post("/associar_pub_proy", (req, res) => {
         });
 });
 
+//-------carga de archivos------------
+
+  // Define the route to handle CSV file uploads
+  app.post('/upload-csv', async (req, res) => {
+    try {
+      const filename = 'data/Investigadores.csv';
+  
+      // Open the CSV file for reading
+      fs.createReadStream(filename)
+        .pipe(csv())
+        .on('data', (row) => {
+          // Extract data from the CSV columns
+          const id = row.id;
+          const nombre_completo = row.nombre_completo;
+          const titulo_academico = row.titulo_academico;
+          const institucion = row.institucion;
+          const email = row.email;
+  
+          const query = `
+            CREATE (:Investigador {
+              id: $id,
+              nombre_completo: $nombre_completo,
+              titulo_academico: $titulo_academico,
+              institucion: $institucion,
+              email: $email
+            });
+          `;
+  
+          // Establish a Neo4j connection and run the query
+          const session = driver.session();
+          session
+            .run(query, {
+              id,
+              nombre_completo,
+              titulo_academico,
+              institucion,
+              email,
+            })
+            .then((result) => {
+              // Handle the query result
+              res.status(200).send({
+                success: true,
+                data: result.records,
+              });
+            })
+            .catch((error) => {
+              // Handle errors during query execution
+              console.error(`Error during query execution: ${error.message}`);
+              res.status(500).send({
+                success: false,
+                message: 'Error during query execution',
+              });
+            })
+            .finally(() => {
+              // Close the session
+              session.close();
+            });
+        })
+        .on('end', () => {
+          console.log('CSV file parsing finished.');
+        });
+    } catch (error) {
+      console.error(`An error occurred: ${error.message}`);
+      res.status(500).send({
+        success: false,
+        message: 'An error occurred',
+      });
+    }
+  });
 //Listen to port
 
 app.listen(3000);
