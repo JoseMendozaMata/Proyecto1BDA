@@ -1,0 +1,203 @@
+{
+	"info": {
+		"_postman_id": "84b2302d-a215-43e0-9a11-4ce912ea4ee2",
+		"name": "RequestP1BDA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "10159319"
+	},
+	"item": [
+		{
+			"name": "Publicacion",
+			"item": [
+				{
+					"name": "PUT Publicacion anno",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 0,\r\n    \"atributo\": \"anno_publicacion\",\r\n    \"nuevo_valor\": 2020    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/publicacion"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear publicacion",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \r\n    \"titulo\": \"BDA para estudiantes\",\r\n    \"anno\": 2018,\r\n    \"nombre\": \"Editorial TEC\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/publicacion"
+					},
+					"response": []
+				},
+				{
+					"name": "Asociar Publicacion-Proyecto",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id_pub\": 0,\r\n    \"id_pry\":0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/associar_pub_proy"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todas las publicaciones",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Top 5 Areas de conocimiento",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Top 5 instituciones",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3000/top_5_instituciones"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Investigador",
+			"item": [
+				{
+					"name": "Crear Investigador",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"nombre\": \"Jose\",\r\n    \"titulo\": \"Bachiller\",\r\n    \"inst\": \"TEC\",\r\n    \"email\": \"jose@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/investigador"
+					},
+					"response": []
+				},
+				{
+					"name": "Asociar Investigador-Proyecto",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id_inv\": 0,\r\n    \"id_pry\":0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/associar_inv_proy"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener publicaciones de investigador",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/publicaciones_investigador"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todos los investigadores",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Top 5 Investigadores",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Proyecto",
+			"item": [
+				{
+					"name": "Crear Proyecto",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"titulo\": \"BDA\",\r\n    \"anno\": 2023,\r\n    \"duracion\": 2,\r\n    \"area\": \"CE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/proyecto"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todos los proyectos",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
