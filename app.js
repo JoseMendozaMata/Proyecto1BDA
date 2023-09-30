@@ -130,37 +130,43 @@ app.get("/publicaciones_investigador", (req, res) => {
 });
 
 app.post("/investigador", (req, res) => {
-    //nombres de acuerdo a los ejemplos de los .csv
-    const query = `CREATE (i: Investigador {
-        id: ${contInv},
-        nombre_completo: ${JSON.stringify(req.body.nombre)}, 
-        titulo_academico:${JSON.stringify(req.body.titulo)}, 
-        institucion:${JSON.stringify(req.body.inst)}, 
-        email:${JSON.stringify(req.body.email)}
+    const session = driver.session();
+  
+    const query = `CREATE (i:Investigador {
+       id: $id,
+       nombre_completo: $nombre_completo,
+       titulo_academico: $titulo_academico,
+       institucion: $institucion,
+       email: $email
     })`;
-
-    session //nombres de acuerdo a los ejemplos de los .csv
-        .run(query)
-
-        .then((result) => {
-            //Aumentar contador
-            contInv += 1;
-
+  
+    const params = {
+      id: req.body.id,
+      nombre_completo: req.body.nombre,
+      titulo_academico: req.body.titulo,
+      institucion: req.body.inst,
+      email: req.body.email
+    };
+  
+    session
+      .writeTransaction((transaction) => {
+        transaction.run(query, params)
+          .then(() => {
             res.status(200).send({
-                success: true,
-                data: result.records,
+              success: true,
             });
-            return;
-        })
-        .catch((error) => {
+          })
+          .catch((error) => {
             res.status(500).send({
-                sucess: false,
-                message: error.message,
+              success: false,
+              message: error.message,
             });
-        });
-
-    //res.send(req.body);
-});
+          })
+          .finally(() => {
+            session.close();
+          });
+      });
+  });
 
 app.put("/investigador", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
@@ -188,37 +194,45 @@ app.put("/investigador", (req, res) => {
 
 // ----------- Proyectos ------------
 
-app.post("/proyecto", (req, res) => {
-    //nombres de acuerdo a los ejemplos de los .csv
-    const query = `CREATE (p: Proyecto {
-        idPry: ${contPry},
-        titulo_proyecto: ${JSON.stringify(req.body.titulo)}, 
-        anno_inicio:${JSON.stringify(req.body.anno)}, 
-        duracion_meses:${JSON.stringify(req.body.duracion)}, 
-        area_conocimiento:${JSON.stringify(req.body.area)}
-    })`;
-
-    session //nombres de acuerdo a los ejemplos de los .csv
-        .run(query)
-
-        .then((result) => {
-            //Aumentar contador
-            contPry += 1;
-            res.status(200).send({
-                success: true,
-                data: result.records,
-            });
-            return;
+app.post("/proyecto", async (req, res) => {
+    const session = driver.session();
+  
+    try {
+      const query = `
+        CREATE (p:Proyecto {
+          idPry: $id,
+          titulo_proyecto: $titulo,
+          anno_inicio: $anno,
+          duracion_meses: $duracion,
+          area_conocimiento: $area
         })
-        .catch((error) => {
-            res.status(500).send({
-                sucess: false,
-                message: error.message,
-            });
-        });
-
-    //res.send(req.body);
-});
+      `;
+  
+      const params = {
+        id: req.body.id,
+        titulo: req.body.titulo,
+        anno: req.body.anno,
+        duracion: req.body.duracion,
+        area: req.body.area,
+      };
+  
+      await session.writeTransaction(async (transaction) => {
+        await transaction.run(query, params);
+      });
+  
+      res.status(200).send({
+        success: true,
+        message: 'Proyecto node successfully created in Neo4j.',
+      });
+    } catch (error) {
+      res.status(500).send({
+        success: false,
+        message: error.message,
+      });
+    } finally {
+      session.close();
+    }
+  });
 
 app.put("/proyecto", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
@@ -246,37 +260,43 @@ app.put("/proyecto", (req, res) => {
 
 // ----------- Publicaciones ------------
 
-app.post("/publicacion", (req, res) => {
-    //nombres de acuerdo a los ejemplos de los .csv
-    const query = `CREATE (pb: Publicacion {
-        idPub: ${contPub},
-        titulo_publicacion: ${JSON.stringify(req.body.titulo)}, 
-        anno_publicacion:${JSON.stringify(req.body.anno)}, 
-        nombre_revista:${JSON.stringify(req.body.nombre)}
-    })`;
-
-    session //nombres de acuerdo a los ejemplos de los .csv
-        .run(query)
-
-        .then((result) => {
-            //Aumentar contador
-            contPub += 1;
-
-            res.status(200).send({
-                success: true,
-                data: result.records,
-            });
-            return;
+app.post("/publicacion", async (req, res) => {
+    const session = driver.session();
+  
+    try {
+      const query = `
+        CREATE (pb:Publicacion {
+          idPub: $id,
+          titulo_publicacion: $titulo,
+          anno_publicacion: $anno,
+          nombre_revista: $nombre
         })
-        .catch((error) => {
-            res.status(500).send({
-                sucess: false,
-                message: error.message,
-            });
-        });
-
-    //res.send(req.body);
-});
+      `;
+  
+      const params = {
+        id: req.body.id,
+        titulo: req.body.titulo,
+        anno: req.body.anno,
+        nombre: req.body.nombre,
+      };
+  
+      await session.writeTransaction(async (transaction) => {
+        await transaction.run(query, params);
+      });
+  
+      res.status(200).send({
+        success: true,
+        message: 'Publicacion node successfully created in Neo4j.',
+      });
+    } catch (error) {
+      res.status(500).send({
+        success: false,
+        message: error.message,
+      });
+    } finally {
+      session.close();
+    }
+  });
 
 app.put("/publicacion", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
@@ -304,127 +324,74 @@ app.put("/publicacion", (req, res) => {
 
 // -------------- Asociar investigador(a) ---------------
 
-app.post("/associar_inv_proy", (req, res) => {
-    const query = `MATCH (i:Investigador), (p:Proyecto)
-    WHERE i.id = ${req.body.id_inv} AND p.idPry = ${req.body.id_pry} AND NOT (i)-[:TRABAJA_EN]->(p)
-    CREATE (i)-[:TRABAJA_EN]->(p)`;
-
-    console.log(query);
-
-    session
-        .run(query)
-
-        .then((result) => {
-            res.status(200).send({
-                success: true,
-                data: result.records,
-            });
-            return;
-        })
-        .catch((error) => {
-            res.status(500).send({
-                sucess: false,
-                message: error.message,
-            });
-        });
-});
+app.post("/associar_inv_proy", async (req, res) => {
+    const session = driver.session();
+  
+    try {
+      const query = `MATCH (i:Investigador), (p:Proyecto)
+        WHERE i.id = $id_inv AND p.idPry = $id_pry AND NOT (i)-[:TRABAJA_EN]->(p)
+        CREATE (i)-[:TRABAJA_EN]->(p)
+      `;
+  
+      const params = {
+        id_inv: req.body.id_inv,
+        id_pry: req.body.id_pry,
+      };
+  
+      await session.writeTransaction(async (transaction) => {
+        await transaction.run(query, params);
+      });
+  
+      res.status(200).send({
+        success: true,
+        message: 'Association between Investigador and Proyecto created in Neo4j.',
+      });
+    } catch (error) {
+      res.status(500).send({
+        success: false,
+        message: error.message,
+      });
+    } finally {
+      session.close();
+    }
+  });
 
 // -------------- Asociar Artículo ---------------
 
-app.post("/associar_pub_proy", (req, res) => {
-    const query = `MATCH (pb:Publicacion), (p:Proyecto)
-    WHERE pb.idPub = ${req.body.id_pub} AND p.idPry = ${req.body.id_pry} AND NOT (pb)-[:RELACIONADO_CON]->(p)
-    CREATE (pb)-[:RELACIONADO_CON]->(p)`;
-
-    console.log(query);
-
-    session
-        .run(query)
-
-        .then((result) => {
-            res.status(200).send({
-                success: true,
-                data: result.records,
-            });
-            return;
-        })
-        .catch((error) => {
-            res.status(500).send({
-                sucess: false,
-                message: error.message,
-            });
-        });
-});
-
-//-------carga de archivos------------
-
-  // Define the route to handle CSV file uploads
-  app.post('/upload-csv', async (req, res) => {
+app.post("/associar_pub_proy", async (req, res) => {
+    const session = driver.session();
+  
     try {
-      const filename = 'data/Investigadores.csv';
+      const query = `
+        MATCH (pb:Publicacion), (p:Proyecto)
+        WHERE pb.idPub = $id_pub AND p.idPry = $id_pry AND NOT (pb)-[:RELACIONADO_CON]->(p)
+        CREATE (pb)-[:RELACIONADO_CON]->(p)
+      `;
   
-      // Open the CSV file for reading
-      fs.createReadStream(filename)
-        .pipe(csv())
-        .on('data', (row) => {
-          // Extract data from the CSV columns
-          const id = row.id;
-          const nombre_completo = row.nombre_completo;
-          const titulo_academico = row.titulo_academico;
-          const institucion = row.institucion;
-          const email = row.email;
+      const params = {
+        id_pub: req.body.id_pub,
+        id_pry: req.body.id_pry,
+      };
   
-          const query = `
-            CREATE (:Investigador {
-              id: $id,
-              nombre_completo: $nombre_completo,
-              titulo_academico: $titulo_academico,
-              institucion: $institucion,
-              email: $email
-            });
-          `;
+      await session.writeTransaction(async (transaction) => {
+        await transaction.run(query, params);
+      });
   
-          // Establish a Neo4j connection and run the query
-          const session = driver.session();
-          session
-            .run(query, {
-              id,
-              nombre_completo,
-              titulo_academico,
-              institucion,
-              email,
-            })
-            .then((result) => {
-              // Handle the query result
-              res.status(200).send({
-                success: true,
-                data: result.records,
-              });
-            })
-            .catch((error) => {
-              // Handle errors during query execution
-              console.error(`Error during query execution: ${error.message}`);
-              res.status(500).send({
-                success: false,
-                message: 'Error during query execution',
-              });
-            })
-            .finally(() => {
-              // Close the session
-              session.close();
-            });
-        })
-        .on('end', () => {
-          console.log('CSV file parsing finished.');
-        });
+      res.status(200).send({
+        success: true,
+        message: 'Association between Publicacion and Proyecto created in Neo4j.',
+      });
     } catch (error) {
-      console.error(`An error occurred: ${error.message}`);
       res.status(500).send({
         success: false,
-        message: 'An error occurred',
+        message: error.message,
       });
+    } finally {
+      session.close();
     }
   });
+
+
 //Listen to port
 
 app.listen(3000);
