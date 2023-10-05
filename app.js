@@ -122,7 +122,7 @@ app.get("/investigadores", (req, res) => {
 
 // Obtener los colegas de un invistigador
 app.get("/colegas/:id", (req, res) => {
-    const query = `MATCH (i:Investigador {id: '${req.params.id}'})
+    const query = `MATCH (i:Investigador {id: ${req.params.id}})
                     OPTIONAL MATCH (i)-[:TRABAJA_EN]->(p:Proyecto)
                     OPTIONAL MATCH (p)<-[:TRABAJA_EN]-(pb:Investigador)
                     RETURN pb as investigador, i as publicacion`;
@@ -174,7 +174,7 @@ cuales participa
 */
 
 app.get("/publicaciones_investigador/:id", (req, res) => {
-    const query = `MATCH (i:Investigador {id: '${req.params.id}'})
+    const query = `MATCH (i:Investigador {id: ${req.params.id}})
     OPTIONAL MATCH (i)-[:TRABAJA_EN]->(p:Proyecto)
     OPTIONAL MATCH (p)<-[:RELACIONADO_CON]-(pb:Publicacion)
     RETURN i as investigador, pb as publicacion`;
@@ -230,11 +230,11 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
 
 //Top 5 investigadores que participan en más investigaciones
 app.get("/top_5_investigadores", (req, res) => {
-    const query = `MATCH (i:Investigador)-[TRABAJA_EN]->(p:Proyecto)
+    const query = `MATCH (i:Investigador)-[:TRABAJA_EN]->(p:Proyecto)
     WITH i, p
-    MATCH (pb:Publicacion)-[RELACIONADO_CON]->(p:Proyecto)
+    MATCH (pb:Publicacion)-[RELACIONADO_CON]->(p)
         WHERE pb.idPub IS NOT NULL
-        WITH i AS Investigador, count(p) AS count
+        WITH i AS Investigador, count(pb) AS count
         ORDER BY count DESC
         LIMIT 5
         RETURN Investigador, count`;
@@ -259,7 +259,7 @@ app.get("/top_5_investigadores", (req, res) => {
                     name:inv.properties["nombre_completo"],
                     "Investigador": inv.properties["nombre_completo"],
                     "Institucion": inv.properties["institucion"],
-                    "Cantidad de Proyectos": count,
+                    "Cantidad de Publicaciones": count,
                 };
 
                 linst.push(obj);
@@ -289,14 +289,15 @@ app.post('/upload',(req,res) => {
         if(err) return res.status(500).send({ message : err })
     })})
     setTimeout(loadNodes.loadNodes,5000);
-    setTimeout(loadAsociaciones.loadAsociaciones,5000);
+    setTimeout(loadAsociaciones.loadAsociaciones,15000);
     return res.status(200).send({ message : 'File upload' })
 })
 //Crear investigador
 app.post("/investigador", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
+    postId = req.body.id ? req.body.id : contInv;
     const query = `CREATE (i: Investigador {
-        id: ${contInv},
+        id: ${postId},
         nombre_completo: ${JSON.stringify(req.body.nombre)}, 
         titulo_academico:${JSON.stringify(req.body.titulo)}, 
         institucion:${JSON.stringify(req.body.inst)}, 
@@ -406,8 +407,9 @@ app.get("/proyectos", (req, res) => {
 
 app.post("/proyecto", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
+    postId = req.body.id ? req.body.id : contPry;
     const query = `CREATE (p: Proyecto {
-        idPry: ${contPry},
+        idPry: ${postId},
         titulo_proyecto: ${JSON.stringify(req.body.titulo)}, 
         anno_inicio:${JSON.stringify(req.body.anno)}, 
         duracion_meses:${JSON.stringify(req.body.duracion)}, 
@@ -619,8 +621,9 @@ app.get("/top_5_instituciones", (req, res) => {
 
 app.post("/publicacion", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
+    postId = req.body.id ? req.body.id : contPub;
     const query = `CREATE (pb: Publicacion {
-        idPub: ${contPub},
+        idPub: ${postId},
         titulo_publicacion: ${JSON.stringify(req.body.titulo)}, 
         anno_publicacion:${JSON.stringify(req.body.anno)}, 
         nombre_revista:${JSON.stringify(req.body.nombre)}

@@ -44,11 +44,11 @@ const loadAsociaciones = () => {
     // Send a POST request to the API for each row
     axios.post(ppURL, data)
       .then((response) => {
-        console.log(`Successfully posted data for ID: ${data.id_proy}`);
+        console.log(`Successfully posted data for ID: ${data.id_pry}`);
       })
       .catch((error) => {
-        console.error(`Failed to post data for ID: ${data.id_proy}`);
-        // console.error(error);
+        console.error(`Failed to post data for ID: ${data.id_pry}`);
+        console.error(error.message);
       });
 
   })
