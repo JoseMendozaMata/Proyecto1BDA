@@ -1,9 +1,13 @@
 var express = require("express");
+const fileUpload = require('express-fileupload')
 var path = require("path");
 var logger = require("morgan");
 var bodyParser = require("body-parser");
 var neo4j = require("neo4j-driver");
 var app = express();
+const loadNodes = require("./loadNodes.js");
+const loadAsociaciones = require("./loadAsociaciones.js");
+
 
 //Para usar el .env config file, para estar seguros que credenciales y base de datos sean correctos
 require("dotenv").config();
@@ -12,6 +16,7 @@ require("dotenv").config();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+app.use(fileUpload())
 app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -24,14 +29,14 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     // Request methods you wish to allow
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Methods', '*');
 
     // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Headers', '*');
 
     // Set to true if you need the website to include cookies in the requests sent
     // to the API (e.g. in case you use sessions)
-    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Credentials', false);
 
     // Pass to next layer of middleware
     next();
@@ -46,10 +51,11 @@ const PORT = process.env.PORT;
 
 //Crear driver
 
-var driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD), {
+const driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD), {
     disableLosslessIntegers: true,
 });
-var session = driver.session();
+// const session = driver.session();
+
 
 //Middleware para usar el body del json para peticiones
 app.use(express.json());
@@ -73,6 +79,7 @@ app.get("/", function (req, res) {
 app.get("/investigadores", (req, res) => {
     const query = `MATCH (investigador:Investigador)
     RETURN investigador`;
+    const session = driver.session();
 
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
@@ -107,6 +114,7 @@ app.get("/investigadores", (req, res) => {
                 message: error.message,
             });
         });
+        session.close();
 });
 
 /*Se seleccionara el nombre
@@ -120,7 +128,7 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
     OPTIONAL MATCH (i)-[:TRABAJA_EN]->(p:Proyecto)
     OPTIONAL MATCH (p)<-[:RELACIONADO_CON]-(pb:Publicacion)
     RETURN i as investigador, pb as publicacion`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -128,7 +136,7 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
             //Lista para guardar las publicaciones
             lpub = [];
             //Obtener investigador de query
-            console.log(result);
+            // console.log(result);
             inv = {
                 name: result.records[0].get("investigador").properties.nombre_completo,
                 "Investigador": result.records[0].get("investigador").properties.nombre_completo,
@@ -164,6 +172,7 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
                 message: error.message,
             });
         });
+        session.close();
 });
 
 //Top 5 investigadores que participan en más investigaciones
@@ -176,7 +185,7 @@ app.get("/top_5_investigadores", (req, res) => {
         ORDER BY count DESC
         LIMIT 5
         RETURN Investigador, count`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -190,7 +199,7 @@ app.get("/top_5_investigadores", (req, res) => {
                 //Obtener cantidad de ocurrencias de query
                 count = result.records[i].get("count");
 
-                console.log(i);
+                // console.log(i);
 
                 //Crear objeto con el nombre completo, la institución donde labora y la cantidad de proyectos de investigación
                 const obj = {
@@ -215,8 +224,18 @@ app.get("/top_5_investigadores", (req, res) => {
                 message: error.message,
             });
         });
+        session.close();
 });
-
+//subir archivos
+app.post('/upload',(req,res) => {
+    let EDFile = req.files.file
+    EDFile.map((item) => {item.mv(`./data/${item.name}`,err => {
+        if(err) return res.status(500).send({ message : err })
+    })})
+    setTimeout(loadNodes.loadNodes,5000);
+    setTimeout(loadAsociaciones.loadAsociaciones,5000);
+    return res.status(200).send({ message : 'File upload' })
+})
 //Crear investigador
 app.post("/investigador", (req, res) => {
     //nombres de acuerdo a los ejemplos de los .csv
@@ -227,7 +246,7 @@ app.post("/investigador", (req, res) => {
         institucion:${JSON.stringify(req.body.inst)}, 
         email:${JSON.stringify(req.body.email)}
     })`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -247,7 +266,7 @@ app.post("/investigador", (req, res) => {
                 message: error.message,
             });
         });
-
+    session.close();
     //res.send(req.body);
 });
 
@@ -257,6 +276,7 @@ app.put("/investigador", (req, res) => {
     WHERE i.id = ${req.body.id}
     SET i.${req.body.atributo} = ${JSON.stringify(req.body.nuevo_valor)}
     `;
+    const session = driver.session();
     session
         .run(query)
 
@@ -273,6 +293,7 @@ app.put("/investigador", (req, res) => {
                 message: error.message,
             });
         });
+        session.close();
 });
 
 // ----------- Proyectos ------------
@@ -281,7 +302,7 @@ app.put("/investigador", (req, res) => {
 app.get("/proyectos", (req, res) => {
     const query = `MATCH (p:Proyecto)
     RETURN p`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -315,6 +336,7 @@ app.get("/proyectos", (req, res) => {
                 message: error.message,
             });
         });
+        session.close();
 });
 
 app.post("/proyecto", (req, res) => {
@@ -326,7 +348,7 @@ app.post("/proyecto", (req, res) => {
         duracion_meses:${JSON.stringify(req.body.duracion)}, 
         area_conocimiento:${JSON.stringify(req.body.area)}
     })`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -345,7 +367,7 @@ app.post("/proyecto", (req, res) => {
                 message: error.message,
             });
         });
-
+session.close();
     //res.send(req.body);
 });
 
@@ -474,19 +496,19 @@ app.get("/top_5_instituciones", (req, res) => {
 
         .then((result) => {
             //Lista para guardar los proyectos
-            linst = [];
+            const linst = [];
 
             for (let i = 0; i < result.records.length; i++) {
                 //Obtener area_conocimiento de query
-                inst = result.records[i].get("Institucion");
+                const inst = result.records[i].get("Institucion");
                 //Obtener cantidad de ocurrencias de query
-                count = result.records[i].get("count");
+                const count = result.records[i].get("count");
 
-                console.log(i);
+                // console.log(i);
 
                 //Crear objeto con area_conocimiento y cantidad
                 const obj = {
-                    name: ins,
+                    name: inst,
                     "Institución": inst,
                     "Cantidad de Proyectos": count,
                 };
@@ -571,7 +593,7 @@ app.post("/associar_inv_proy", (req, res) => {
     WHERE i.id = ${req.body.id_inv} AND p.idPry = ${req.body.id_pry} AND NOT (i)-[:TRABAJA_EN]->(p)
     CREATE (i)-[:TRABAJA_EN]->(p)`;
 
-    console.log(query);
+    // console.log(query);
 
     session
         .run(query)
@@ -598,7 +620,7 @@ app.post("/associar_pub_proy", (req, res) => {
     WHERE pb.idPub = ${req.body.id_pub} AND p.idPry = ${req.body.id_pry} AND NOT (pb)-[:RELACIONADO_CON]->(p)
     CREATE (pb)-[:RELACIONADO_CON]->(p)`;
 
-    console.log(query);
+    // console.log(query);
 
     session
         .run(query)

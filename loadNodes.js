@@ -2,11 +2,11 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const axios = require('axios');
 
-const invURL = 'http://localhost:3000/investigador';
-const proyURL = 'http://localhost:3000/proyecto';
-const pubURL = 'http://localhost:3000/publicacion';
-const ipURL = 'http://localhost:3000/associar_inv_proy';
-const ppURL = 'http://localhost:3000/associar_pub_proy';
+const invURL = 'http://localhost:3080/investigador';
+const proyURL = 'http://localhost:3080/proyecto';
+const pubURL = 'http://localhost:3080/publicacion';
+const ipURL = 'http://localhost:3080/associar_inv_proy';
+const ppURL = 'http://localhost:3080/associar_pub_proy';
  
 const loadNodes = () => {
   // Posts de Investigadores
@@ -90,4 +90,4 @@ const loadNodes = () => {
   });
 }
 
-exports.loadNodes = loadNodes;
+module.exports.loadNodes = loadNodes;
