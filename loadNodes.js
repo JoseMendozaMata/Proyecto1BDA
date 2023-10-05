@@ -28,7 +28,7 @@ const loadNodes = () => {
         })
         .catch((error) => {
           console.error(`Failed to post data for ID: ${data.id}`);
-          console.error(error);
+          // console.error(error);
         });
 
     })
@@ -55,7 +55,7 @@ const loadNodes = () => {
       })
       .catch((error) => {
         console.error(`Failed to post data for ID: ${data.id}`);
-        console.error(error);
+        // console.error(error);
       });
       
   })
@@ -81,7 +81,7 @@ const loadNodes = () => {
       })
       .catch((error) => {
         console.error(`Failed to post data for ID: ${data.id}`);
-        console.error(error);
+        // console.error(error);
       });
 
   })

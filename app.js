@@ -106,6 +106,8 @@ app.get("/investigadores", (req, res) => {
                 success: true,
                 investigadores: linv,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -113,8 +115,56 @@ app.get("/investigadores", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
         session.close();
+
+        });
+});
+
+// Obtener los colegas de un invistigador
+app.get("/colegas/:id", (req, res) => {
+    const query = `MATCH (i:Investigador {id: '${req.params.id}'})
+                    OPTIONAL MATCH (i)-[:TRABAJA_EN]->(p:Proyecto)
+                    OPTIONAL MATCH (p)<-[:TRABAJA_EN]-(pb:Investigador)
+                    RETURN pb as investigador, i as publicacion`;
+    const session = driver.session();
+
+    session //nombres de acuerdo a los ejemplos de los .csv
+        .run(query)
+
+        .then((result) => {
+            //Lista para guardar las publicaciones
+            linv = [];
+
+            for (let i = 0; i < result.records.length; i++) {
+                //Obtener investigador de query
+                inv = {
+                    name: result.records[i].get("investigador").properties.nombre_completo,
+                    "Investigador": result.records[i].get("investigador").properties.nombre_completo,
+                    Id: result.records[i].get("investigador").properties.id,
+                    "Titulo Academico": result.records[i].get("investigador").properties.titulo_academico,
+                    "Institucion": result.records[i].get("investigador").properties.institucion,
+                    "Email": result.records[i].get("investigador").properties.email
+                };
+
+                linv.push(inv);
+            }
+
+            res.status(200).send({
+                success: true,
+                investigadores: linv,
+            });
+        session.close();
+
+            return;
+        })
+        .catch((error) => {
+            res.status(500).send({
+                sucess: false,
+                message: error.message,
+            });
+        session.close();
+
+        });
 });
 
 /*Se seleccionara el nombre
@@ -164,6 +214,8 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
                 success: true,
                 publicaciones: lpub,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -171,8 +223,9 @@ app.get("/publicaciones_investigador/:id", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
         session.close();
+
+        });
 });
 
 //Top 5 investigadores que participan en más investigaciones
@@ -216,6 +269,8 @@ app.get("/top_5_investigadores", (req, res) => {
                 success: true,
                 investigadores: linst,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -223,8 +278,9 @@ app.get("/top_5_investigadores", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
         session.close();
+
+        });
 });
 //subir archivos
 app.post('/upload',(req,res) => {
@@ -258,6 +314,8 @@ app.post("/investigador", (req, res) => {
                 success: true,
                 data: result.records,
             });
+    session.close();
+
             return;
         })
         .catch((error) => {
@@ -265,8 +323,9 @@ app.post("/investigador", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
     session.close();
+
+        });
     //res.send(req.body);
 });
 
@@ -285,6 +344,8 @@ app.put("/investigador", (req, res) => {
                 success: true,
                 data: result.records,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -292,8 +353,9 @@ app.put("/investigador", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
         session.close();
+
+        });
 });
 
 // ----------- Proyectos ------------
@@ -328,6 +390,8 @@ app.get("/proyectos", (req, res) => {
                 success: true,
                 proyectos: lproy,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -335,8 +399,9 @@ app.get("/proyectos", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
         session.close();
+
+        });
 });
 
 app.post("/proyecto", (req, res) => {
@@ -359,6 +424,8 @@ app.post("/proyecto", (req, res) => {
                 success: true,
                 data: result.records,
             });
+session.close();
+
             return;
         })
         .catch((error) => {
@@ -366,8 +433,9 @@ app.post("/proyecto", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
 session.close();
+
+        });
     //res.send(req.body);
 });
 
@@ -377,6 +445,7 @@ app.put("/proyecto", (req, res) => {
     WHERE p.idPry = ${req.body.id}
     SET p.${req.body.atributo} = ${JSON.stringify(req.body.nuevo_valor)}
     `;
+    const session = driver.session();
     session
         .run(query)
 
@@ -385,6 +454,8 @@ app.put("/proyecto", (req, res) => {
                 success: true,
                 data: result.records,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -392,6 +463,8 @@ app.put("/proyecto", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -401,6 +474,7 @@ app.put("/proyecto", (req, res) => {
 app.get("/publicaciones", (req, res) => {
     const query = `MATCH (p:Publicacion)
     RETURN p`;
+    const session = driver.session();
 
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
@@ -426,6 +500,8 @@ app.get("/publicaciones", (req, res) => {
                 success: true,
                 publicaciones: lpub,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -433,6 +509,8 @@ app.get("/publicaciones", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -444,7 +522,7 @@ app.get("/top_5_area_conocimiento", (req, res) => {
     ORDER BY count DESC
     LIMIT 5
     RETURN AreaConocimiento, count`;
-
+    const session = driver.session();
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
 
@@ -472,6 +550,8 @@ app.get("/top_5_area_conocimiento", (req, res) => {
                 success: true,
                 publicaciones: lareas,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -479,6 +559,8 @@ app.get("/top_5_area_conocimiento", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -490,6 +572,7 @@ app.get("/top_5_instituciones", (req, res) => {
         ORDER BY count DESC
         LIMIT 5
         RETURN Institucion, count`;
+        const session = driver.session();
 
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
@@ -520,6 +603,8 @@ app.get("/top_5_instituciones", (req, res) => {
                 success: true,
                 publicaciones: linst,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -527,6 +612,8 @@ app.get("/top_5_instituciones", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -538,6 +625,7 @@ app.post("/publicacion", (req, res) => {
         anno_publicacion:${JSON.stringify(req.body.anno)}, 
         nombre_revista:${JSON.stringify(req.body.nombre)}
     })`;
+    const session = driver.session();
 
     session //nombres de acuerdo a los ejemplos de los .csv
         .run(query)
@@ -550,6 +638,8 @@ app.post("/publicacion", (req, res) => {
                 success: true,
                 data: result.records,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -557,8 +647,9 @@ app.post("/publicacion", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
-        });
+        session.close();
 
+        });
     //res.send(req.body);
 });
 
@@ -568,6 +659,7 @@ app.put("/publicacion", (req, res) => {
     WHERE pb.idPub = ${req.body.id}
     SET pb.${req.body.atributo} = ${JSON.stringify(req.body.nuevo_valor)}
     `;
+    const session = driver.session();
     session
         .run(query)
 
@@ -576,6 +668,8 @@ app.put("/publicacion", (req, res) => {
                 success: true,
                 data: result.records,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -583,6 +677,8 @@ app.put("/publicacion", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -594,6 +690,7 @@ app.post("/associar_inv_proy", (req, res) => {
     CREATE (i)-[:TRABAJA_EN]->(p)`;
 
     // console.log(query);
+    const session = driver.session();
 
     session
         .run(query)
@@ -603,6 +700,8 @@ app.post("/associar_inv_proy", (req, res) => {
                 success: true,
                 data: result.records,
             });
+        session.close();
+
             return;
         })
         .catch((error) => {
@@ -610,6 +709,8 @@ app.post("/associar_inv_proy", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+        session.close();
+
         });
 });
 
@@ -621,6 +722,7 @@ app.post("/associar_pub_proy", (req, res) => {
     CREATE (pb)-[:RELACIONADO_CON]->(p)`;
 
     // console.log(query);
+    const session = driver.session();
 
     session
         .run(query)
@@ -630,6 +732,7 @@ app.post("/associar_pub_proy", (req, res) => {
                 success: true,
                 data: result.records,
             });
+            session.close();
             return;
         })
         .catch((error) => {
@@ -637,7 +740,9 @@ app.post("/associar_pub_proy", (req, res) => {
                 sucess: false,
                 message: error.message,
             });
+            session.close();
         });
+        
 });
 
 //Listen to port

@@ -23,7 +23,7 @@ const loadAsociaciones = () => {
       })
       .catch((error) => {
         console.error(`Failed to post data for ID: ${data.id_inv}`);
-        console.error(error);
+        // console.error(error);
       });
 
   })
@@ -48,7 +48,7 @@ const loadAsociaciones = () => {
       })
       .catch((error) => {
         console.error(`Failed to post data for ID: ${data.id_proy}`);
-        console.error(error);
+        // console.error(error);
       });
 
   })
